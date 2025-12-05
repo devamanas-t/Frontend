@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { motion, useMotionValue, useTransform, animate } from "framer-motion";
-import { Mail, Lock, ArrowRight, Eye, EyeOff, ArrowLeft } from "lucide-react"; 
+import { motion, useMotionValue, useTransform, animate, AnimatePresence } from "framer-motion";
+import { Mail, Lock, ArrowRight, Eye, EyeOff, ArrowLeft, AlertCircle } from "lucide-react"; 
 import { Link, useNavigate } from "react-router-dom"; 
+
+// --- 🔐 DUMMY CREDENTIALS ---
+const MOCK_CREDENTIALS = {
+  email: "user@test.com",
+  password: "password123"
+};
 
 // Google Icon
 const GoogleIcon = () => (
@@ -14,9 +20,13 @@ const GoogleIcon = () => (
 );
 
 const Login = () => {
+  const navigate = useNavigate(); 
+  
+  // State for Inputs
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate(); 
+  const [error, setError] = useState(""); // State to store error messages
 
   // Parallax Logic
   const mouseX = useMotionValue(0);
@@ -37,10 +47,33 @@ const Login = () => {
   const blobX = useTransform(mouseX, (value) => value * -1);
   const blobY = useTransform(mouseY, (value) => value * -1);
 
+  // Handle Input Change
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+    // Clear error when user starts typing again
+    if (error) setError("");
+  };
+
+  // Handle Submit Logic
   const handleSubmit = (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setTimeout(() => setIsLoading(false), 2000);
+
+    // Simulate API Call delay
+    setTimeout(() => {
+      if (
+        formData.email === MOCK_CREDENTIALS.email && 
+        formData.password === MOCK_CREDENTIALS.password
+      ) {
+        // ✅ SUCCESS: Navigate to Dashboard
+        console.log("Login Successful");
+        navigate('/dashboard'); 
+      } else {
+        // ❌ ERROR: Show error message
+        setError("Invalid email or password");
+        setIsLoading(false);
+      }
+    }, 1500);
   };
 
   return (
@@ -67,61 +100,90 @@ const Login = () => {
 
         {/* --- MAIN CARD --- */}
         <motion.div 
-          // 🚀 1. Entry: From Right
           initial={{ x: "100%", opacity: 0, skewX: -15 }} 
           animate={{ x: 0, opacity: 1, skewX: 0 }} 
-          
-          // 🚀 2. Exit: To Right (Reverse)
-          exit={{ 
-            x: "100%",        // Slides out to right
-            opacity: 0,       
-            skewX: -15,       // Tilts again
-            transition: { duration: 0.5, ease: "easeInOut" } // Smooth exit
-          }}
-
-          transition={{ 
-            type: "spring", 
-            stiffness: 200, 
-            damping: 25,    
-            mass: 1
-          }}
+          exit={{ x: "100%", opacity: 0, skewX: -15, transition: { duration: 0.5 } }}
+          transition={{ type: "spring", stiffness: 200, damping: 25, mass: 1 }}
           className="relative z-10 w-full max-w-md p-8 rounded-3xl mx-4 border border-white/40 shadow-[0_8px_30px_rgb(0,0,0,0.12)] bg-white/60 backdrop-blur-xl"
         >
           
-          {/* 🔙 BACK BUTTON (Inside Card) */}
           <button 
             onClick={() => navigate('/')} 
             className="absolute top-8 left-8 p-2 rounded-full hover:bg-slate-100/50 text-slate-400 hover:text-teal-600 transition-all"
-            title="Go Back"
           >
             <ArrowLeft size={20} />
           </button>
 
           <div className="text-center mb-8 pt-2">
             <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Welcome Back</h1>
-            <p className="text-slate-500 mt-2 text-sm">Enter your details to access your workspace.</p>
+            <p className="text-slate-500 mt-2 text-sm">
+              Use <b>user@test.com</b> / <b>password123</b>
+            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
+            
+            {/* Email Input */}
             <div className="relative group">
               <Mail className="absolute left-4 top-3.5 text-slate-400 group-focus-within:text-teal-600 transition-colors w-5 h-5" />
-              <input type="email" placeholder="Email Address" className="w-full bg-white/50 border border-slate-200 rounded-xl py-3 pl-12 pr-4 text-slate-800 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all placeholder:text-slate-400" required />
+              <input 
+                type="email" 
+                name="email" 
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="Email Address" 
+                className="w-full bg-white/50 border border-slate-200 rounded-xl py-3 pl-12 pr-4 text-slate-800 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all placeholder:text-slate-400" 
+                required 
+              />
             </div>
 
+            {/* Password Input */}
             <div className="relative group">
               <Lock className="absolute left-4 top-3.5 text-slate-400 group-focus-within:text-teal-600 transition-colors w-5 h-5" />
-              <input type={showPassword ? "text" : "password"} placeholder="Password" className="w-full bg-white/50 border border-slate-200 rounded-xl py-3 pl-12 pr-12 text-slate-800 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all placeholder:text-slate-400" required />
+              <input 
+                type={showPassword ? "text" : "password"} 
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Password" 
+                className="w-full bg-white/50 border border-slate-200 rounded-xl py-3 pl-12 pr-12 text-slate-800 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all placeholder:text-slate-400" 
+                required 
+              />
               <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-3.5 text-slate-400 hover:text-teal-600 transition-colors">
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
 
+            {/* Error Message Animation */}
+            <AnimatePresence>
+              {error && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="flex items-center gap-2 text-red-500 text-sm bg-red-50 p-3 rounded-lg border border-red-100"
+                >
+                  <AlertCircle size={16} />
+                  <span>{error}</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <div className="flex justify-end">
               <a href="#" className="text-sm font-medium text-teal-600 hover:text-teal-700 transition-colors">Forgot Password?</a>
             </div>
 
-            <motion.button whileHover={{ scale: 1.02, filter: "brightness(1.1)" }} whileTap={{ scale: 0.98 }} disabled={isLoading} className="w-full bg-gradient-to-r from-teal-400 via-cyan-500 to-emerald-500 animate-gradient-x text-white py-3.5 rounded-xl font-bold shadow-lg shadow-teal-500/40 flex items-center justify-center gap-2 hover:shadow-teal-500/60 transition-all disabled:opacity-70 disabled:cursor-not-allowed">
-              {isLoading ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><span>Sign In</span> <ArrowRight size={20} /></>}
+            <motion.button 
+              whileHover={{ scale: 1.02, filter: "brightness(1.1)" }} 
+              whileTap={{ scale: 0.98 }} 
+              disabled={isLoading} 
+              className="w-full bg-gradient-to-r from-teal-400 via-cyan-500 to-emerald-500 animate-gradient-x text-white py-3.5 rounded-xl font-bold shadow-lg shadow-teal-500/40 flex items-center justify-center gap-2 hover:shadow-teal-500/60 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {isLoading ? (
+                <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <><span>Sign In</span> <ArrowRight size={20} /></>
+              )}
             </motion.button>
           </form>
 

@@ -1,291 +1,300 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutDashboard, 
   FileText, 
   Megaphone, 
-  Plus, 
   BookOpen, 
   Users, 
-  Settings, 
-  Menu, 
-  X,
   Search,
   Bell,
-  ChevronRight,
-  LogOut // Imported here
+  LogOut,
+  Calendar,
+  CheckCircle2,
+  X 
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 
-// --- Mock Data ---
+// --- Mock Data for Timeline ---
 const recentExams = [
-  { id: 1, title: 'Physics Final: Thermodynamics', class: 'Class 10-A', date: 'Oct 10, 2025', status: 'Completed' },
-  { id: 2, title: 'Chemistry: Organic Compounds', class: 'Class 12-B', date: 'Oct 15, 2025', status: 'Scheduled' },
-  { id: 3, title: 'Biology: Plant Systems', class: 'Class 9-C', date: 'Oct 20, 2025', status: 'Draft' },
+  { id: 1, title: 'Physics Final: Thermodynamics', class: 'Class 10-A', date: 'Oct 10, 2025', status: 'Completed', time: '10:00 AM' },
+  { id: 2, title: 'Chemistry: Organic Compounds', class: 'Class 12-B', date: 'Oct 15, 2025', status: 'Scheduled', time: '02:00 PM' },
+  { id: 3, title: 'Biology: Plant Systems', class: 'Class 9-C', date: 'Oct 20, 2025', status: 'Draft', time: '11:30 AM' },
+  { id: 4, title: 'Mathematics: Calculus I', class: 'Class 11-A', date: 'Oct 22, 2025', status: 'Draft', time: '09:00 AM' },
+  { id: 5, title: 'English Literature: Shakespeare', class: 'Class 10-B', date: 'Oct 25, 2025', status: 'Scheduled', time: '01:00 PM' },
 ];
 
-const recentActivities = [
-  { id: 1, type: 'Lesson Plan', title: 'Newton\'s Laws of Motion', date: '2 hours ago', icon: BookOpen },
-  { id: 2, type: 'Announcement', title: 'Science Fair Registration', date: '5 hours ago', icon: Megaphone },
-  { id: 3, type: 'Lesson Plan', title: 'Introduction to Calculus', date: '1 day ago', icon: BookOpen },
-];
-
-// --- Components ---
-
-const SidebarItem = ({ icon: Icon, label, active, to }) => (
-  <Link 
-    to={to}
-    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
-      active 
-        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' 
-        : 'text-slate-500 hover:bg-indigo-50 hover:text-indigo-600'
-    }`}
-  >
-    <Icon size={20} className={active ? 'text-white' : 'text-slate-400 group-hover:text-indigo-600'} />
-    <span className="font-medium text-sm">{label}</span>
-  </Link>
-);
-
-const QuickActionCard = ({ title, desc, icon: Icon, colorClass, delay }) => (
-  <motion.button
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: delay, duration: 0.4 }}
-    className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-lg hover:border-indigo-100 transition-all duration-300 text-left w-full group"
-  >
-    <div className={`w-12 h-12 rounded-xl ${colorClass} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-      <Icon size={24} className="text-white" />
-    </div>
-    <h3 className="text-slate-800 font-bold text-lg mb-1">{title}</h3>
-    <p className="text-slate-500 text-sm">{desc}</p>
-  </motion.button>
-);
-
-const Dashboard = () => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-  return (
-    <div className="flex h-screen bg-slate-50 font-sans overflow-hidden">
-      
-      {/* --- Mobile Sidebar Overlay --- */}
-      {isSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-slate-900/50 z-40 lg:hidden"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
-
-      {/* --- Sidebar --- */}
-      <aside className={`
-        fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 transform transition-transform duration-300 ease-in-out
-        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-      `}>
-        <div className="h-full flex flex-col">
-          {/* Logo Area */}
-          <div className="h-20 flex items-center px-8 border-b border-slate-100">
-            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center mr-3">
-              <span className="text-white font-bold text-lg">E</span>
-            </div>
-            <span className="text-xl font-bold text-slate-800">EduGenius</span>
-            <button className="ml-auto lg:hidden text-slate-400" onClick={() => setIsSidebarOpen(false)}>
-              <X size={24} />
-            </button>
-          </div>
-
-          {/* Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-            <SidebarItem icon={LayoutDashboard} label="Dashboard" active={true} to="/dashboard" />
-            <SidebarItem icon={FileText} label="Exams" to="/create-exam" />
-            <SidebarItem icon={BookOpen} label="Lesson Plans" to="/lesson-plan" />
-            <SidebarItem icon={Megaphone} label="Announcements" to="/announcement" />
-            <div className="pt-4 pb-2">
-              <p className="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Management</p>
-            </div>
-            <SidebarItem icon={Users} label="Students" to="/students" />
-            <SidebarItem icon={Settings} label="Settings" to="/settings" />
-          </nav>
-
-          {/* --- NEW: Logout Section --- */}
-          <div className="px-4 pb-2">
-             <button className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group w-full text-slate-500 hover:bg-red-50 hover:text-red-600">
-                <LogOut size={20} className="text-slate-400 group-hover:text-red-600" />
-                <span className="font-medium text-sm">Logout</span>
-             </button>
-          </div>
-
-          {/* User Profile Snippet */}
-          <div className="p-4 border-t border-slate-100">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold">
-                T
-              </div>
-              <div>
-                <p className="text-sm font-bold text-slate-800">Teacher Account</p>
-                <p className="text-xs text-slate-500">vynx@edugenius.com</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      {/* --- Main Content --- */}
-      <main className="flex-1 flex flex-col h-full overflow-hidden">
-        
-        {/* Top Navbar */}
-        <header className="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-6 lg:px-10">
-          <div className="flex items-center gap-4">
-            <button className="lg:hidden text-slate-500" onClick={() => setIsSidebarOpen(true)}>
-              <Menu size={24} />
-            </button>
-            <h1 className="text-2xl font-bold text-slate-800">Dashboard</h1>
-          </div>
-          
-          <div className="flex items-center gap-6">
-            <div className="hidden md:flex items-center bg-slate-100 rounded-full px-4 py-2">
-              <Search size={18} className="text-slate-400" />
-              <input 
-                type="text" 
-                placeholder="Search anything..." 
-                className="bg-transparent border-none focus:ring-0 text-sm text-slate-600 w-48 ml-2 placeholder:text-slate-400" 
-              />
-            </div>
-            <button className="relative text-slate-500 hover:text-indigo-600 transition-colors">
-              <Bell size={24} />
-              <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
-            </button>
-          </div>
-        </header>
-
-        {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto p-6 lg:p-10">
-          <div className="max-w-7xl mx-auto space-y-8">
-
-            {/* Welcome Section */}
-            <motion.div 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex flex-col md:flex-row md:items-center justify-between gap-4"
-            >
-              <div>
-                <h2 className="text-3xl font-bold text-slate-800">Hello, Vynx! 👋</h2>
-                <p className="text-slate-500 mt-1">Here's what's happening in your classes today.</p>
-              </div>
-              <motion.button 
-                whileHover={{ scale: 1.05 }}
+// --- Updated Dock Item Component (Labels Underneath) ---
+const DockItem = ({ icon: Icon, label, isActive, onClick, color }) => {
+    return (
+        <button 
+            onClick={onClick}
+            className="group flex flex-col items-center justify-end gap-1.5 min-w-[72px] pb-1 relative"
+        >
+            <motion.div
+                whileHover={{ y: -6, scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2 shadow-lg shadow-indigo-200 transition-all"
-              >
-                <Plus size={20} />
-                Create New Exam
-              </motion.button>
+                className={`
+                    w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center text-white shadow-lg transition-all duration-300
+                    ${isActive ? 'ring-4 ring-white ring-offset-2 ring-offset-indigo-50 shadow-xl' : 'opacity-90 hover:opacity-100'}
+                    ${color}
+                `}
+            >
+                <Icon size={24} strokeWidth={1.5} />
             </motion.div>
+            
+            {/* Permanent Label: Always visible underneath */}
+            <span className={`
+                text-[10px] md:text-[11px] font-medium tracking-tight leading-none text-center transition-colors duration-200
+                ${isActive ? 'text-indigo-600 font-bold' : 'text-slate-500 group-hover:text-slate-700'}
+            `}>
+                {label}
+            </span>
 
-            {/* Quick Actions Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <QuickActionCard 
-                title="Exam Builder" 
-                desc="Create quizzes using AI support." 
-                icon={FileText} 
-                colorClass="bg-indigo-500"
-                delay={0.1}
-              />
-              <QuickActionCard 
-                title="Lesson Plan" 
-                desc="Generate structured plans instantly." 
-                icon={BookOpen} 
-                colorClass="bg-emerald-500"
-                delay={0.2}
-              />
-              <QuickActionCard 
-                title="Announcement" 
-                desc="Notify students about updates." 
-                icon={Megaphone} 
-                colorClass="bg-sky-500"
-                delay={0.3}
-              />
-            </div>
-
-            {/* Main Data Split: Exams (Left) & Recent Activity (Right) */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              
-              {/* Recent Exams List */}
-              <motion.div 
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4 }}
-                className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-100 p-6"
-              >
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-bold text-slate-800">Recent Exams</h3>
-                  <Link to="/create-exam" className="text-sm text-indigo-600 font-semibold hover:underline">View All</Link>
-                </div>
-                
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="text-left border-b border-slate-100">
-                      <tr>
-                        <th className="pb-3 text-xs font-bold text-slate-400 uppercase tracking-wider">Exam Title</th>
-                        <th className="pb-3 text-xs font-bold text-slate-400 uppercase tracking-wider">Class</th>
-                        <th className="pb-3 text-xs font-bold text-slate-400 uppercase tracking-wider">Date</th>
-                        <th className="pb-3 text-xs font-bold text-slate-400 uppercase tracking-wider">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-50">
-                      {recentExams.map((exam) => (
-                        <tr key={exam.id} className="group hover:bg-slate-50 transition-colors">
-                          <td className="py-4 text-sm font-medium text-slate-700 group-hover:text-indigo-600">{exam.title}</td>
-                          <td className="py-4 text-sm text-slate-500">{exam.class}</td>
-                          <td className="py-4 text-sm text-slate-500">{exam.date}</td>
-                          <td className="py-4">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize
-                              ${exam.status === 'Completed' ? 'bg-emerald-100 text-emerald-800' : ''}
-                              ${exam.status === 'Scheduled' ? 'bg-sky-100 text-sky-800' : ''}
-                              ${exam.status === 'Draft' ? 'bg-slate-100 text-slate-600' : ''}
-                            `}>
-                              {exam.status}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </motion.div>
-
-              {/* Recent Activity / Quick Links */}
-              <motion.div 
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.5 }}
-                className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6"
-              >
-                <h3 className="text-lg font-bold text-slate-800 mb-6">Recent Activity</h3>
-                <div className="space-y-6">
-                  {recentActivities.map((item) => (
-                    <div key={item.id} className="flex gap-4 items-start group cursor-pointer">
-                      <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center flex-shrink-0 group-hover:bg-indigo-50 transition-colors">
-                        <item.icon size={18} className="text-slate-400 group-hover:text-indigo-600" />
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-semibold text-slate-700 group-hover:text-indigo-600 transition-colors">{item.title}</h4>
-                        <p className="text-xs text-slate-500 mt-1">Created a {item.type} • {item.date}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                
-                <button className="w-full mt-8 py-3 rounded-xl border border-slate-200 text-slate-600 text-sm font-medium hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center justify-center gap-2">
-                  View All Activity
-                  <ChevronRight size={16} />
-                </button>
-              </motion.div>
-
-            </div>
-          </div>
-        </div>
-      </main>
-    </div>
-  );
+            {/* Active Indicator Dot */}
+            {isActive && (
+                <motion.div 
+                    layoutId="activeDot"
+                    className="absolute -bottom-1 w-1 h-1 bg-indigo-500 rounded-full" 
+                />
+            )}
+        </button>
+    );
 };
 
-export default Dashboard;
+// --- Glass Modal Component (The Popup) ---
+const GlassModal = ({ children, onClose }) => {
+    return (
+        <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/20 backdrop-blur-sm p-4 md:p-8 pb-36" 
+        >
+            <motion.div 
+                initial={{ scale: 0.9, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.9, y: 20 }}
+                className="bg-white/90 backdrop-blur-xl w-full max-w-5xl h-full max-h-[85vh] rounded-3xl shadow-2xl border border-white/50 overflow-hidden flex flex-col relative"
+            >
+                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200/60 bg-white/40">
+                    <div className="flex gap-2">
+                        <button onClick={onClose} className="w-3 h-3 rounded-full bg-red-500 hover:bg-red-600 transition-colors flex items-center justify-center group">
+                            <X size={8} className="text-red-900 opacity-0 group-hover:opacity-100" />
+                        </button>
+                        <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                        <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                    </div>
+                    
+                    <button 
+                        onClick={onClose}
+                        className="p-2 hover:bg-slate-200/50 rounded-full transition-colors"
+                    >
+                        <X size={20} className="text-slate-500" />
+                    </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-6 scrollbar-hide">
+                    {children}
+                </div>
+            </motion.div>
+        </motion.div>
+    );
+};
+
+// --- Main Layout Component ---
+const MacOsDashboard = () => {
+    const [currentTime, setCurrentTime] = useState(new Date());
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    const isDashboardHome = location.pathname === '/dashboard' || location.pathname === '/dashboard/';
+
+    useEffect(() => {
+        const timer = setInterval(() => setCurrentTime(new Date()), 60000);
+        return () => clearInterval(timer);
+    }, []);
+
+    const getGreeting = () => {
+        const hour = currentTime.getHours();
+        if (hour < 12) return "Good Morning";
+        if (hour < 18) return "Good Afternoon";
+        return "Good Evening";
+    };
+
+    const handleNavigation = (path) => {
+        navigate(path);
+    };
+
+    const closeModal = () => {
+        navigate('/dashboard');
+    };
+
+    return (
+        <div className="h-screen w-full bg-[#f6f8fc] relative overflow-hidden flex flex-col font-sans">
+            
+            {/* --- Top Bar --- */}
+            <header className="h-16 px-6 md:px-10 flex items-center justify-between z-10 sticky top-0">
+                <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold">E</div>
+                    <span className="font-bold text-slate-700 tracking-tight">EduGenius AI</span>
+                </div>
+                
+                <div className="hidden md:flex items-center bg-white/60 backdrop-blur-md border border-white/50 shadow-sm rounded-full px-4 py-2 w-96 transition-all focus-within:ring-2 focus-within:ring-indigo-100 focus-within:bg-white">
+                    <Search size={16} className="text-slate-400" />
+                    <input 
+                        type="text" 
+                        placeholder="Ask Vynx anything..." 
+                        className="bg-transparent border-none outline-none text-sm text-slate-700 ml-2 w-full placeholder:text-slate-400"
+                    />
+                </div>
+
+                <div className="flex items-center gap-4">
+                    <span className="text-sm font-medium text-slate-500 hidden sm:block">
+                        {currentTime.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+                    </span>
+                    <button className="relative p-2 rounded-full hover:bg-white/50 transition-colors">
+                        <Bell size={20} className="text-slate-600" />
+                        <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+                    </button>
+                    <div className="w-9 h-9 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold border-2 border-white shadow-sm">
+                        T
+                    </div>
+                </div>
+            </header>
+
+            {/* --- Main Content Area --- */}
+            <main className="flex-1 relative z-0 overflow-y-auto p-4 md:p-6 pb-44 scrollbar-hide">
+                <div className="max-w-7xl mx-auto h-full flex flex-col justify-center">
+                    
+                    {/* --- Introduction Page: Recent Exams --- */}
+                    <div className="flex flex-col items-center w-full">
+                        <div className="text-center mb-8">
+                            <h1 className="text-3xl md:text-4xl font-extrabold text-slate-800 tracking-tight mb-2">
+                                {getGreeting()}, <span className="text-indigo-600">Vynx.</span>
+                            </h1>
+                        </div>
+
+                        {/* Recent Exams List */}
+                        <div className="w-full max-w-2xl bg-white/50 backdrop-blur-sm rounded-3xl p-6 border border-white/60 shadow-xl shadow-indigo-100/50">
+                            <div className="flex items-center justify-between mb-6 px-2">
+                                <h3 className="text-base font-bold text-slate-700 flex items-center gap-2">
+                                    <Calendar size={18} className="text-indigo-500" />
+                                    Recent Exams
+                                </h3>
+                            </div>
+                            
+                            <div className="space-y-3 relative">
+                                <div className="absolute left-6 top-4 bottom-4 w-0.5 bg-slate-200/80"></div>
+
+                                {recentExams.slice(0, 3).map((item, idx) => (
+                                    <motion.div 
+                                        key={item.id}
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: idx * 0.1 }}
+                                        className="relative bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4 ml-2 hover:scale-[1.02] transition-transform cursor-pointer group hover:shadow-md"
+                                    >
+                                        <div className={`
+                                            relative z-10 w-9 h-9 rounded-full flex items-center justify-center border-4 border-white shadow-sm shrink-0
+                                            ${item.status === 'Completed' ? 'bg-emerald-100 text-emerald-600' : 'bg-indigo-100 text-indigo-600'}
+                                        `}>
+                                            {item.status === 'Completed' ? <CheckCircle2 size={16}/> : <FileText size={16}/>}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex justify-between items-center mb-1">
+                                                <h4 className="font-semibold text-slate-700 truncate pr-2 group-hover:text-indigo-600 transition-colors">{item.title}</h4>
+                                                <span className="text-xs font-bold text-slate-400 whitespace-nowrap bg-slate-50 px-2 py-1 rounded-md">{item.time}</span>
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <p className="text-xs text-slate-500 font-medium">{item.class}</p>
+                                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
+                                                    item.status === 'Completed' ? 'bg-emerald-50 text-emerald-600' : 'bg-indigo-50 text-indigo-600'
+                                                }`}>
+                                                    {item.status}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            {/* --- The Popup / Modal Layer --- */}
+            <AnimatePresence>
+                {!isDashboardHome && (
+                    <GlassModal onClose={closeModal}>
+                        <Outlet />
+                    </GlassModal>
+                )}
+            </AnimatePresence>
+
+            {/* --- The Dock (Fixed Bottom with Labels) --- */}
+            <div className="fixed bottom-6 left-0 right-0 flex justify-center z-50 pointer-events-none">
+                <motion.div 
+                    initial={{ y: 100 }}
+                    animate={{ y: 0 }}
+                    className="bg-white/90 backdrop-blur-2xl border border-white/50 shadow-2xl shadow-indigo-900/10 px-4 md:px-8 py-3 pb-4 rounded-[2rem] flex items-end gap-2 md:gap-4 pointer-events-auto"
+                >
+                    <DockItem 
+                        icon={LayoutDashboard} 
+                        label="Dashboard" 
+                        path="/dashboard"
+                        isActive={isDashboardHome} 
+                        onClick={() => handleNavigation('/dashboard')} 
+                        color="bg-slate-700"
+                    />
+                    <div className="w-px h-12 bg-slate-300/40 mx-1 mb-2"></div>
+                    
+                    <DockItem 
+                        icon={FileText} 
+                        label="Exams" 
+                        path="/dashboard/create-exam"
+                        isActive={location.pathname.includes('exams')} 
+                        onClick={() => handleNavigation('/dashboard/create-exam')} 
+                        color="bg-indigo-500"
+                    />
+                    <DockItem 
+                        icon={BookOpen} 
+                        label="Lesson Plans" 
+                        path="/dashboard/lesson-plan"
+                        isActive={location.pathname.includes('lesson-plan')} 
+                        onClick={() => handleNavigation('/dashboard/lesson-plan')} 
+                        color="bg-emerald-500"
+                    />
+                    <DockItem 
+                        icon={Megaphone} 
+                        label="Notice" 
+                        path="/dashboard/announcements"
+                        isActive={location.pathname.includes('announcements')} 
+                        onClick={() => handleNavigation('/dashboard/announcements')} 
+                        color="bg-sky-500"
+                    />
+                    <DockItem 
+                        icon={Users} 
+                        label="Students" 
+                        path="/dashboard/students"
+                        isActive={location.pathname.includes('students')} 
+                        onClick={() => handleNavigation('/dashboard/students')} 
+                        color="bg-violet-500"
+                    />
+                    
+                    <div className="w-px h-12 bg-slate-300/40 mx-1 mb-2"></div>
+
+                    <DockItem 
+                        icon={LogOut} 
+                        label="Logout" 
+                        isActive={false} 
+                        onClick={() => navigate('/')} 
+                        color="bg-red-500"
+                    />
+                </motion.div>
+            </div>
+        </div>
+    );
+};
+
+export default MacOsDashboard;

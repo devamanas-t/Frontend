@@ -11,16 +11,16 @@ import {
   Trash2, 
   ChevronLeft,
   Minus,
-  Plus
+  Plus,
+  Loader2
 } from 'lucide-react';
-
-// Removed 'react-router-dom' imports since we just want the page UI
-// import { Link, useNavigate } from 'react-router-dom'; 
+import { useNavigate } from 'react-router-dom';
 
 const LessonPlan = () => {
-  // const navigate = useNavigate(); // Removed navigation hook
+  const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const [syllabusMode, setSyllabusMode] = useState('text'); 
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // --- Grade Options Data ---
   const gradeOptions = [
@@ -85,12 +85,30 @@ const LessonPlan = () => {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // STOPPED NAVIGATION HERE
-    console.log("Form Submitted:", formData);
-    alert("Generate Clicked! (Navigation is disabled)");
-    // navigate('/lesson-plan/preview', { state: { formData } }); 
+    setIsGenerating(true);
+
+    try {
+        console.log("Generating Lesson Plan for:", formData);
+        
+        // Simulate AI Latency (2 seconds)
+        await new Promise(resolve => setTimeout(resolve, 2000)); 
+        
+        // --- ID GENERATION LOGIC ---
+        // Generates a random integer ID between 1 and 5 
+        // This ensures the preview page receives a valid integer ID to fetch mock data
+        const randomId = Math.floor(Math.random() * 5) + 1;
+        
+        // Navigate to the preview page with the integer ID
+        navigate(`/dashboard/lesson-plan/preview/${randomId}`); 
+
+    } catch (error) {
+        console.error("Generation failed:", error);
+        alert("Failed to generate lesson plan. Please try again.");
+    } finally {
+        setIsGenerating(false);
+    }
   };
 
   return (
@@ -108,8 +126,11 @@ const LessonPlan = () => {
           </div>
         </div>
         
-        {/* Changed Link to a simple button/div since we aren't using Router */}
-        <button className="group flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors px-4 py-2 rounded-lg hover:bg-indigo-50">
+        {/* Back to Dashboard Button */}
+        <button 
+          onClick={() => navigate('/dashboard')}
+          className="group flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors px-4 py-2 rounded-lg hover:bg-indigo-50"
+        >
           <ChevronLeft size={18} className="transition-transform group-hover:-translate-x-1" /> 
           Back to Dashboard
         </button>
@@ -142,6 +163,7 @@ const LessonPlan = () => {
                     onChange={handleInputChange}
                     placeholder="e.g. Thermodynamics, Data Structures, Modern History..."
                     required
+                    disabled={isGenerating}
                     className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-slate-800 placeholder:text-slate-400 transition-all"
                   />
                 </div>
@@ -158,6 +180,7 @@ const LessonPlan = () => {
                     <select 
                       value={gradeSelect}
                       onChange={handleGradeSelectChange}
+                      disabled={isGenerating}
                       className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-slate-800 appearance-none cursor-pointer"
                     >
                       {gradeOptions.map((group, index) => (
@@ -180,11 +203,12 @@ const LessonPlan = () => {
                         exit={{ opacity: 0, height: 0, marginTop: 0 }}
                         className="overflow-hidden"
                       >
-                         <input 
+                          <input 
                           type="text"
                           placeholder="Type specific grade/course here..."
                           value={formData.grade}
                           onChange={handleCustomGradeChange}
+                          disabled={isGenerating}
                           className="w-full px-4 py-3 bg-indigo-50 border border-indigo-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-indigo-900 placeholder:text-indigo-400 text-sm"
                           autoFocus
                         />
@@ -199,8 +223,9 @@ const LessonPlan = () => {
                   <div className="flex items-center gap-3">
                     <button 
                       type="button"
+                      disabled={isGenerating}
                       onClick={() => handleDurationChange(-0.5)}
-                      className="w-12 h-[50px] flex items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-indigo-600 transition-colors active:scale-95"
+                      className="w-12 h-[50px] flex items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-indigo-600 transition-colors active:scale-95 disabled:opacity-50"
                     >
                       <Minus size={20} />
                     </button>
@@ -214,8 +239,9 @@ const LessonPlan = () => {
 
                     <button 
                       type="button"
+                      disabled={isGenerating}
                       onClick={() => handleDurationChange(0.5)}
-                      className="w-12 h-[50px] flex items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-indigo-600 transition-colors active:scale-95"
+                      className="w-12 h-[50px] flex items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-indigo-600 transition-colors active:scale-95 disabled:opacity-50"
                     >
                       <Plus size={20} />
                     </button>
@@ -255,6 +281,7 @@ const LessonPlan = () => {
                     value={formData.syllabusText}
                     onChange={handleInputChange}
                     rows="5"
+                    disabled={isGenerating}
                     placeholder="Paste syllabus modules, key topics, or learning outcomes here..."
                     className="w-full px-4 py-3 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-slate-800 placeholder:text-slate-400 text-sm resize-none"
                   ></textarea>
@@ -276,7 +303,7 @@ const LessonPlan = () => {
                         </button>
                       </div>
                     ) : (
-                      <div onClick={() => fileInputRef.current.click()} className="cursor-pointer py-2">
+                      <div onClick={() => !isGenerating && fileInputRef.current.click()} className={`cursor-pointer py-2 ${isGenerating ? 'opacity-50' : ''}`}>
                         <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-indigo-50 transition-colors">
                           <UploadCloud className="h-6 w-6 text-slate-400 group-hover:text-indigo-600" />
                         </div>
@@ -291,11 +318,20 @@ const LessonPlan = () => {
 
               <button 
                 type="submit" 
-                disabled={!formData.topic || !formData.grade}
+                disabled={!formData.topic || !formData.grade || isGenerating}
                 className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 transition-all disabled:opacity-70 disabled:cursor-not-allowed transform active:scale-[0.98] hover:scale-[1.01]"
               >
-                <Sparkles size={20} />
-                Generate Lesson Plan
+                {isGenerating ? (
+                    <>
+                        <Loader2 className="animate-spin" size={20} />
+                        Generating Plan...
+                    </>
+                ) : (
+                    <>
+                        <Sparkles size={20} />
+                        Generate Lesson Plan
+                    </>
+                )}
               </button>
             </form>
           </div>

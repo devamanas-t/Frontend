@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { 
   Brain, CheckCircle, Wand2, 
-  FileUp, ListChecks, Layers, AlertCircle
+  FileUp, ListChecks, Layers, AlertCircle, ArrowLeft
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -20,10 +20,10 @@ const CreateExam = () => {
     file: null,
     difficulty: 'Medium',
     
-    // Normal Mode Configuration
-    normalMcqCount: 5,   // New: MCQs in Normal Exam
-    q1Mark: 5,           // Theory 1 Mark
-    q3Mark: 3,           // Theory 3 Marks
+    // Normal Mode Configuration (Updated)
+    normalMcqCount: 5,   // MCQs (1 Mark)
+    q3Count: 4,          // Theory (3 Marks)
+    q7Count: 2,          // Theory (7 Marks)
     
     // MCQ Only Mode Configuration
     totalMcqOnly: 20
@@ -36,9 +36,9 @@ const CreateExam = () => {
 
     // Enforce Limits
     if (name === 'normalMcqCount') {
-      if (val > 20) val = 20; // Max 20 for MCQs in Normal
-    } else if (['q1Mark', 'q3Mark'].includes(name)) {
-      if (val > 10) val = 10; // Max 10 for Theory
+      if (val > 20) val = 20; // Max 20 for MCQs
+    } else if (['q3Count', 'q7Count'].includes(name)) {
+      if (val > 10) val = 10; // Max 10 for Theory questions
     } else if (name === 'totalMcqOnly') {
       if (val > 50) val = 50; // Max 50 for MCQ Only Mode
     } else {
@@ -80,9 +80,9 @@ const CreateExam = () => {
         totalMarks = formData.totalMcqOnly;
 
       } else {
-        // --- MODE 2: NORMAL EXAM (Mixed) ---
+        // --- MODE 2: NORMAL EXAM (Updated for 3 & 7 Marks) ---
         
-        // 1. Add MCQs
+        // 1. Add MCQs (1 Mark)
         if (formData.normalMcqCount > 0) {
             questions.push(...Array.from({ length: formData.normalMcqCount }).map((_, i) => ({
               id: `mcq-${i}`, type: 'MCQ', marks: 1,
@@ -92,22 +92,22 @@ const CreateExam = () => {
             totalMarks += parseInt(formData.normalMcqCount);
         }
 
-        // 2. Add 1 Mark Theory
-        if (formData.q1Mark > 0) {
-          questions.push(...Array.from({ length: formData.q1Mark }).map((_, i) => ({
-            id: `1m-${i}`, type: '1 Mark', marks: 1,
-            question: `Define term ${i+1} related to ${formData.topic}?`
+        // 2. Add 3 Mark Theory (Short Answer)
+        if (formData.q3Count > 0) {
+          questions.push(...Array.from({ length: formData.q3Count }).map((_, i) => ({
+            id: `3m-${i}`, type: '3 Marks', marks: 3,
+            question: `Briefly explain the concept of ${formData.topic} part ${i+1}?`
           })));
-          totalMarks += parseInt(formData.q1Mark);
+          totalMarks += (parseInt(formData.q3Count) * 3);
         }
 
-        // 3. Add 3 Mark Theory
-        if (formData.q3Mark > 0) {
-          questions.push(...Array.from({ length: formData.q3Mark }).map((_, i) => ({
-            id: `3m-${i}`, type: '3 Marks', marks: 3,
-            question: `Explain the concept of ${formData.topic} part ${i+1}?`
+        // 3. Add 7 Mark Theory (Long Answer/Essay)
+        if (formData.q7Count > 0) {
+          questions.push(...Array.from({ length: formData.q7Count }).map((_, i) => ({
+            id: `7m-${i}`, type: '7 Marks', marks: 7,
+            question: `Write a detailed essay regarding ${formData.topic} covering aspect ${i+1}. Include examples.`
           })));
-          totalMarks += (parseInt(formData.q3Mark) * 3);
+          totalMarks += (parseInt(formData.q7Count) * 7);
         }
       }
 
@@ -124,12 +124,23 @@ const CreateExam = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pt-24 pb-12 px-4 sm:px-6 lg:px-8 font-sans text-slate-800">
+    <div className="min-h-screen bg-slate-50 pt-12 pb-12 px-4 sm:px-6 lg:px-8 font-sans text-slate-800">
       
       <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:40px_40px]" />
 
       <div className="max-w-3xl mx-auto">
         
+        {/* NEW: Back to Dashboard Button */}
+        <button 
+          onClick={() => navigate('/dashboard')}
+          className="group flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors mb-6 font-medium"
+        >
+          <div className="p-2 bg-white border border-slate-200 rounded-full group-hover:border-slate-300 transition-all shadow-sm">
+             <ArrowLeft size={18} />
+          </div>
+          Back to Dashboard
+        </button>
+
         {/* Main Card */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -174,7 +185,7 @@ const CreateExam = () => {
                     </motion.div>
                   ) : (
                     <motion.div key="file" initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} layout>
-                       <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-indigo-50 hover:border-indigo-200 transition-all">
+                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-indigo-50 hover:border-indigo-200 transition-all">
                           <div className="flex flex-col items-center justify-center pt-5 pb-6">
                               {formData.file ? (
                                 <>
@@ -210,7 +221,7 @@ const CreateExam = () => {
                     <Layers size={20} />
                   </div>
                   <h3 className={`font-bold text-sm ${examMode === 'normal' ? 'text-indigo-900' : 'text-slate-700'}`}>Normal Exam</h3>
-                  <p className="text-xs text-slate-500 mt-1">Mix of MCQs & Theory</p>
+                  <p className="text-xs text-slate-500 mt-1">MCQ + 3 Mark + 7 Mark</p>
                   {examMode === 'normal' && <div className="absolute top-3 right-3 text-indigo-600"><CheckCircle size={18} /></div>}
                 </motion.div>
 
@@ -234,35 +245,35 @@ const CreateExam = () => {
                  <AnimatePresence mode="wait">
                     {examMode === 'normal' ? (
                       <motion.div key="normal-settings" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-5">
-                         <div className="flex items-center gap-2 mb-2 text-amber-700 bg-amber-50 border border-amber-100 px-3 py-2 rounded-lg text-xs font-semibold">
-                            <AlertCircle size={14} /> Limits: MCQs (Max 20), Theory (Max 10 each)
-                         </div>
-                         
-                         {/* MCQ Count in Normal Mode */}
-                         <div className="flex items-center justify-between">
-                            <span className="text-sm font-bold text-slate-700">MCQs (1 Mark)</span>
-                            <input type="number" name="normalMcqCount" min="0" max="20" value={formData.normalMcqCount} onChange={handleChange} className="w-20 text-center p-2 rounded-xl border border-slate-300 focus:border-indigo-500 outline-none text-sm font-bold shadow-sm" />
-                         </div>
+                          <div className="flex items-center gap-2 mb-2 text-amber-700 bg-amber-50 border border-amber-100 px-3 py-2 rounded-lg text-xs font-semibold">
+                             <AlertCircle size={14} /> Limits: MCQs (Max 20), Theory (Max 10 each)
+                          </div>
+                          
+                          {/* MCQ Count */}
+                          <div className="flex items-center justify-between">
+                             <span className="text-sm font-bold text-slate-700">MCQs (1 Mark)</span>
+                             <input type="number" name="normalMcqCount" min="0" max="20" value={formData.normalMcqCount} onChange={handleChange} className="w-20 text-center p-2 rounded-xl border border-slate-300 focus:border-indigo-500 outline-none text-sm font-bold shadow-sm" />
+                          </div>
 
-                         {/* 1 Mark Theory */}
-                         <div className="flex items-center justify-between">
-                            <span className="text-sm font-bold text-slate-700">Theory (1 Mark)</span>
-                            <input type="number" name="q1Mark" min="0" max="10" value={formData.q1Mark} onChange={handleChange} className="w-20 text-center p-2 rounded-xl border border-slate-300 focus:border-indigo-500 outline-none text-sm font-bold shadow-sm" />
-                         </div>
+                          {/* 3 Mark Theory (UPDATED) */}
+                          <div className="flex items-center justify-between">
+                             <span className="text-sm font-bold text-slate-700">Short Theory (3 Marks)</span>
+                             <input type="number" name="q3Count" min="0" max="10" value={formData.q3Count} onChange={handleChange} className="w-20 text-center p-2 rounded-xl border border-slate-300 focus:border-indigo-500 outline-none text-sm font-bold shadow-sm" />
+                          </div>
 
-                         {/* 3 Mark Theory */}
-                         <div className="flex items-center justify-between">
-                            <span className="text-sm font-bold text-slate-700">Theory (3 Marks)</span>
-                            <input type="number" name="q3Mark" min="0" max="10" value={formData.q3Mark} onChange={handleChange} className="w-20 text-center p-2 rounded-xl border border-slate-300 focus:border-indigo-500 outline-none text-sm font-bold shadow-sm" />
-                         </div>
+                          {/* 7 Mark Theory (UPDATED) */}
+                          <div className="flex items-center justify-between">
+                             <span className="text-sm font-bold text-slate-700">Long Theory (7 Marks)</span>
+                             <input type="number" name="q7Count" min="0" max="10" value={formData.q7Count} onChange={handleChange} className="w-20 text-center p-2 rounded-xl border border-slate-300 focus:border-indigo-500 outline-none text-sm font-bold shadow-sm" />
+                          </div>
                       </motion.div>
                     ) : (
                       <motion.div key="mcq-settings" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                         <div className="flex items-center justify-between">
-                            <span className="text-sm font-bold text-slate-700">Total MCQs</span>
-                            <input type="number" name="totalMcqOnly" min="5" max="50" value={formData.totalMcqOnly} onChange={handleChange} className="w-20 text-center p-2 rounded-xl border border-slate-300 focus:border-indigo-500 outline-none text-sm font-bold shadow-sm" />
-                         </div>
-                         <p className="text-xs text-slate-500 mt-2 font-medium">Recommended: 20-50 Questions</p>
+                          <div className="flex items-center justify-between">
+                             <span className="text-sm font-bold text-slate-700">Total MCQs</span>
+                             <input type="number" name="totalMcqOnly" min="5" max="50" value={formData.totalMcqOnly} onChange={handleChange} className="w-20 text-center p-2 rounded-xl border border-slate-300 focus:border-indigo-500 outline-none text-sm font-bold shadow-sm" />
+                          </div>
+                          <p className="text-xs text-slate-500 mt-2 font-medium">Recommended: 20-50 Questions</p>
                       </motion.div>
                     )}
                  </AnimatePresence>
