@@ -1,27 +1,30 @@
 import React from 'react'
-import { Routes, Route } from 'react-router-dom' // Import Routes for navigation
-import Navbar from './components/Navbar'        // 1. Import the Navbar
+import { Routes, Route, useLocation } from 'react-router-dom'
+import Navbar from './components/Navbar'
 import LandingPage from './pages/LandingPage'
 import Footer from './components/Footer'
+import Login from './pages/Login'
 
 const App = () => {
+  const location = useLocation();
+
   return (
     <div className="bg-slate-50 min-h-screen">
-      
-      {/* 2. Add Navbar at the very top */}
-      <Navbar /> 
 
-      {/* 3. Define Routes so buttons work (e.g. /login, /dashboard) */}
+      {/* Navbar */}
+      <Navbar />
+
+      {/* Routes */}
       <Routes>
         <Route path="/" element={<LandingPage />} />
-        {/* You will add other routes here later, like: */}
-        {/* <Route path="/login" element={<Login />} /> */}
-        {/* <Route path="/dashboard" element={<Dashboard />} /> */}
+        <Route path="/login" element={<Login />} />
       </Routes>
-      <Footer />
+
+      {/* Footer only if NOT login page */}
+      {location.pathname !== "/login" && <Footer />}
 
     </div>
-  )
-}
+  );
+};
 
-export default App
+export default App;
