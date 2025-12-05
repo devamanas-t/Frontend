@@ -5,6 +5,7 @@ import LandingPage from './pages/LandingPage'
 import Footer from './components/Footer'
 import Login from './pages/Login'
 
+
 const App = () => {
   const location = useLocation();
 
@@ -13,15 +14,21 @@ const App = () => {
 
       {/* Navbar */}
       <Navbar />
-
+         
       {/* Routes */}
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
+        
+
       </Routes>
 
       {/* Footer only if NOT login page */}
       {location.pathname !== "/login" && <Footer />}
+      
+ z      
+       
+
 
     </div>
   );
