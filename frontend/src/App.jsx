@@ -25,7 +25,7 @@ const App = () => {
     <div className="bg-slate-50 min-h-screen">
 
       {/* Show Navbar only on home page */}
-      {showLayout && <Navbar />}
+      {/* {showLayout && <Navbar />} */}
 
       {/* Routes */}
       <Routes>
@@ -44,7 +44,7 @@ const App = () => {
       </Routes>
 
       {/* Show Footer only on home page */}
-      {showLayout && <Footer />}
+      {/* {showLayout && <Footer />} */}
 
     </div>
   );
