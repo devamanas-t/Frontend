@@ -12,74 +12,143 @@ import {
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
+// --- LessonPreview Component (Dark Theme) ---
 const LessonPreview = () => {
+  // Hooks for Navigation and State retrieval
   const navigate = useNavigate();
   const location = useLocation();
 
-  // ------------------------------
-  // RECEIVE PASSED STATE HERE
-  // ------------------------------
+  // State from react-router-dom
   const passedLessonPlan = location.state?.lessonPlan || "";
-  console.log(passedLessonPlan)
   const passedLessonDetails = location.state?.lessonDetails || null;
-
+  
+  // Internal Component State
   const [loading, setLoading] = useState(true);
   const [generatedPlan, setGeneratedPlan] = useState("");
   const [copied, setCopied] = useState(false);
 
-  // ---------------------------------------
-  // LOAD THE PASSED LESSON PLAN
-  // ---------------------------------------
+  // Load the lesson plan with a simulated delay
   useEffect(() => {
-    // simulate loading effect
     setTimeout(() => {
       setGeneratedPlan(passedLessonPlan || "⚠️ No lesson plan data was provided.");
       setLoading(false);
     }, 500);
   }, [passedLessonPlan]);
 
-  // ---------------------------------------
-  // COPY TO CLIPBOARD
-  // ---------------------------------------
+  // Handler for Copy to Clipboard
   const handleCopy = () => {
-    navigator.clipboard.writeText(generatedPlan);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (generatedPlan) {
+      navigator.clipboard.writeText(generatedPlan);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+  
+  // ------------------------------------------------------------------
+  // 💡 FUNCTIONALITY HANDLERS (Print, Export PDF, Save, Share)
+  // ------------------------------------------------------------------
+
+  // 1. Print Handler
+  const handlePrint = () => {
+    // Triggers the browser's native print dialog
+    window.print();
   };
 
-  // ---------------------------------------
-  // UI
-  // ---------------------------------------
-  return (
-    <div className="min-h-screen bg-slate-50 font-sans flex flex-col">
+  // 2. Export PDF Handler (UPDATED FOR CLARITY - Uses Print-to-PDF method)
+  const handleExportPDF = () => {
+    // This function tells the browser to open the print dialog.
+    // The user must then select 'Save as PDF' from the destination/printer options.
+    handlePrint();
+  };
 
-      {/* Header */}
-      <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 sticky top-0 z-30 shadow-sm">
+  // 3. Save Handler (Saves content as a .txt file)
+  const handleSave = () => {
+    const filename = `${passedLessonDetails?.topic || "Lesson_Plan"}_${new Date().toLocaleDateString()}.txt`;
+    const element = document.createElement('a');
+    
+    // Create a Blob containing the content
+    const file = new Blob([generatedPlan], { type: 'text/plain' });
+    element.href = URL.createObjectURL(file);
+    element.download = filename;
+    document.body.appendChild(element); 
+    element.click();
+    document.body.removeChild(element); 
+  };
+
+  // 4. Share Handler (Uses Web Share API or falls back to an alert)
+  const handleShare = async () => {
+    const shareData = {
+      title: `Lesson Plan: ${passedLessonDetails?.topic || 'Untitled'}`,
+      text: generatedPlan.substring(0, 100) + '...', // Short preview of content
+      url: window.location.href, // Link to the preview page
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+        console.log('Lesson shared successfully.');
+      } catch (err) {
+        console.error('Error sharing:', err);
+      }
+    } else {
+      // Fallback
+      alert(`Share functionality not supported. Copy the URL:\n${window.location.href}`);
+    }
+  };
+  
+  // ------------------------------------------------------------------
+  // 💡 Function to process Markdown (Placeholder)
+  // ------------------------------------------------------------------
+  const renderMarkdown = (markdownText) => {
+    // Simple simulation of formatting:
+    let html = markdownText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'); // Bold
+    html = html.replace(/\n\n/g, '<p>'); // Convert double newline to paragraphs
+    html = html.replace(/\n\-/g, '<li>'); // Convert hyphen newlines to list items (simple simulation)
+
+    return html;
+  };
+
+  // --- UI Structure (Dark Theme) ---
+  return (
+    <div className="min-h-screen bg-gray-900 font-sans flex flex-col antialiased">
+      
+      {/* 🚀 Header: Sticky Navigation Bar */}
+      <header className="h-16 bg-gray-800 border-b border-gray-700 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-30 shadow-xl">
+        
+        {/* 🔄 Back to Dashboard Button */}
         <div className="flex items-center gap-4">
           <button
-            onClick={() => navigate("/lesson-plan")}
-            className="p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors flex items-center gap-2 group"
+            onClick={() => navigate("/dashboard")} 
+            className="p-2 hover:bg-gray-700 rounded-full text-gray-300 transition-colors flex items-center gap-2 group"
+            aria-label="Back to Dashboard"
           >
             <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-            <span className="font-medium text-sm">Back to Edit</span>
+            <span className="font-medium text-sm hidden sm:inline">Back to Dashboard</span>
           </button>
         </div>
 
+        {/* Action Buttons */}
         {!loading && (
           <div className="flex gap-3">
+            {/* Copy Button */}
             <button
               onClick={handleCopy}
-              className="hidden sm:flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:text-indigo-600 transition-colors"
+              className="hidden sm:flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-300 bg-gray-900 border border-gray-700 rounded-lg hover:bg-gray-700 hover:text-indigo-400 transition-colors active:scale-95"
             >
               {copied ? (
-                <Check size={16} className="text-emerald-500" />
+                <Check size={16} className="text-emerald-400" />
               ) : (
                 <Copy size={16} />
               )}
               {copied ? "Copied" : "Copy Text"}
             </button>
 
-            <button className="flex items-center gap-2 px-5 py-2 text-sm font-bold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 shadow-md shadow-indigo-200 transition-all active:scale-95">
+            {/* Export PDF Button (Primary Action - calls handleExportPDF) */}
+            <button 
+              onClick={handleExportPDF} // <-- Attached handler
+              className="flex items-center gap-2 px-5 py-2 text-sm font-bold text-white bg-indigo-600 rounded-lg hover:bg-indigo-500 shadow-lg shadow-indigo-800/40 transition-all active:scale-95"
+              aria-label="Export as PDF"
+            >
               <Download size={18} />
               Export PDF
             </button>
@@ -87,68 +156,87 @@ const LessonPreview = () => {
         )}
       </header>
 
-      {/* Main */}
+      {/* 📝 Main Content Area */}
       <main className="flex-1 p-4 lg:p-10 flex items-start justify-center">
+        
         {loading ? (
-          // LOADING UI
+          // --- Loading State UI ---
           <div className="flex flex-col items-center justify-center mt-20 text-center space-y-6">
             <div className="relative">
-              <div className="w-20 h-20 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
+              <div className="w-20 h-20 border-4 border-indigo-900 border-t-indigo-400 rounded-full animate-spin"></div>
               <Sparkles
-                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-indigo-600"
+                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-indigo-400"
                 size={32}
               />
             </div>
 
             <div>
-              <h2 className="text-2xl font-bold text-slate-800">
-                Loading Lesson Plan…
+              <h2 className="text-2xl font-bold text-gray-100">
+                Generating Lesson Plan…
               </h2>
-              <p className="text-slate-500 mt-2">
-                For topic:
-                <span className="font-semibold text-indigo-600">
+              <p className="text-gray-400 mt-2">
+                Topic:
+                <span className="font-semibold text-indigo-400 ml-1">
                   {passedLessonDetails?.topic || "N/A"}
                 </span>
               </p>
             </div>
           </div>
         ) : (
-          // RESULT UI
+          // --- Result Display UI ---
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="w-full max-w-4xl bg-white min-h-[85vh] shadow-xl border border-slate-100 rounded-xl overflow-hidden flex flex-col"
+            className="w-full max-w-4xl bg-gray-800 min-h-[85vh] shadow-2xl border border-gray-700 rounded-xl overflow-hidden flex flex-col"
           >
-            {/* Toolbar */}
-            <div className="h-14 bg-slate-50 border-b border-slate-100 flex items-center justify-between px-6">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Preview Mode
+            {/* Document Toolbar */}
+            <div className="h-14 bg-gray-900 border-b border-gray-700 flex items-center justify-between px-6">
+              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                Lesson Plan Preview
               </span>
 
+              {/* Utility Icons */}
               <div className="flex gap-1">
-                <button className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-white rounded transition-all">
+                {/* Print Button */}
+                <button 
+                  onClick={handlePrint} // <-- Attached handler
+                  className="p-2 text-gray-500 hover:text-indigo-400 hover:bg-gray-700 rounded transition-all" 
+                  aria-label="Print"
+                >
                   <Printer size={18} />
                 </button>
-                <button className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-white rounded transition-all">
+                {/* Save Button */}
+                <button 
+                  onClick={handleSave} // <-- Attached handler
+                  className="p-2 text-gray-500 hover:text-indigo-400 hover:bg-gray-700 rounded transition-all" 
+                  aria-label="Save"
+                >
                   <Save size={18} />
                 </button>
-                <button className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-white rounded transition-all">
+                {/* Share Button */}
+                <button 
+                  onClick={handleShare} // <-- Attached handler
+                  className="p-2 text-gray-500 hover:text-indigo-400 hover:bg-gray-700 rounded transition-all" 
+                  aria-label="Share"
+                >
                   <Share2 size={18} />
                 </button>
               </div>
             </div>
 
-            {/* Content */}
-            <div className="flex-1 p-8 md:p-16 prose prose-slate max-w-none">
-              <div className="whitespace-pre-wrap text-slate-700 leading-relaxed font-medium font-serif text-lg">
-                {generatedPlan}
+            {/* Lesson Plan Content - Now using formatted HTML */}
+            <div className="flex-1 p-8 md:p-16 overflow-y-auto">
+              <div 
+                className="prose prose-lg prose-invert max-w-none text-gray-300"
+                dangerouslySetInnerHTML={{ __html: renderMarkdown(generatedPlan) }}
+              >
               </div>
             </div>
 
             {/* Footer */}
-            <div className="bg-slate-50 p-4 border-t border-slate-100 text-center text-xs text-slate-400">
-              Loaded via navigation state • {new Date().toLocaleDateString()}
+            <div className="bg-gray-900 p-4 border-t border-gray-700 text-center text-xs text-gray-500">
+              Generated by AI • Loaded via navigation state • {new Date().toLocaleDateString()}
             </div>
           </motion.div>
         )}
